@@ -87,11 +87,14 @@ int main(void)
 //----------------------------------------------------------------------------------
 
 void InitGameState(void){
-    sampleDrone = {Vector2{screenWidth/2, screenHeight/2}, 1, 0.f, 0, 0, 0};
+    sampleDrone = {Vector2{screenWidth/2, screenHeight/2}, 1, 0.f, 100, 60, 60};
 }
 
-void UpdateState(void)
-{
+void UpdateState(void){
+    if (IsKeyDown(KEY_D)) Rotate(&sampleDrone, 1); 
+    if (IsKeyDown(KEY_A)) Rotate(&sampleDrone, -1); 
+    if (IsKeyDown(KEY_W)) Advance(&sampleDrone, 1); 
+    if (IsKeyDown(KEY_S)) Advance(&sampleDrone, -1); 
 }
 
 void UpdateGameFrame(void)

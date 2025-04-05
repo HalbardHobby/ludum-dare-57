@@ -4,16 +4,26 @@
 *
 ********************************************************************************************/
 #include "drone.h"
+#include "raylib.h"
+#include "raymath.h"
 
 void Advance(Drone* drone, int direction){
-
+    // Find velocity vector
+    Vector2 velocity = {0.f, drone->speed*GetFrameTime()*(float)direction};
+    velocity = Vector2Rotate(velocity, drone->rotation*(PI / 180));
+    // Add vectors
+    drone->position = Vector2Add(drone->position, velocity);
 }
 
 void Rotate(Drone* drone, int direction){
-
+    drone->rotation += drone->rotationSpeed*GetFrameTime()*(float)direction;
 }
 
 void Render(Drone* drone){
     // Execute Render
-    DrawPoly(drone->position, 5, drone->size*32, drone->rotation, RED);
+    DrawPoly(drone->position, 6, drone->size*32, drone->rotation, RED);
+    Vector2 dir{0, 32};
+    dir = Vector2Rotate(dir, drone->rotation*(PI / 180));
+    dir = Vector2Add(drone->position, dir);
+    DrawLineV(drone->position, dir, GREEN);
 }
