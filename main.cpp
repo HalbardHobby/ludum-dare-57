@@ -3,18 +3,26 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
+#define MIN(a, b) ((a)<(b)? (a) : (b))
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-const int screenWidth = 1280;
-const int screenHeight = 720;
+const int windowWidth = 1280;
+const int windowHeight = 720;
+const int screenWidth = 320;
+const int screenHeight = 180;
+
+RenderTexture2D target;     // Virtual screen for letterbox scaling
+float scale;
+
 bool showMessageBox = false;
 
 
 //----------------------------------------------------------------------------------
 // Module functions declaration
 //----------------------------------------------------------------------------------
-void UpdateDrawFrame(void);     // Update and Draw one frame
+void UpdateGameFrame(void);     // Update and draw the game frame
 void UpdateState(void);
 
 //------------------------------------------------------------------------------------
@@ -24,9 +32,13 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "base");
+    InitWindow(windowWidth, windowHeight, "base");
     InitAudioDevice();
 
+    // Render texture initialization, used to hold the rendering result so we can easily resize it
+    RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
+    SetTextureFilter(target.texture, TEXTURE_FILTER_POINT);  // Texture scale filter to use
+    scale = MIN((float)GetScreenWidth()/screenWidth, (float)GetScreenHeight()/screenHeight);
 
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -34,7 +46,20 @@ int main(void)
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         UpdateState();
-        UpdateDrawFrame();
+        
+        BeginTextureMode(target);
+        UpdateGameFrame();
+        EndTextureMode();
+
+        BeginDrawing();
+        ClearBackground(GRAY);
+        ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+
+        DrawTexturePro(target.texture, (Rectangle){ 0.0f, 0.0f, (float)target.texture.width, (float)-target.texture.height },
+                            (Rectangle){ (GetScreenWidth() - ((float)screenWidth*scale))*0.5f, (GetScreenHeight() - ((float)screenHeight*scale))*0.5f,
+                            (float)screenWidth*scale, (float)screenHeight*scale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+        EndDrawing();
+
     }
 
     CloseAudioDevice();
@@ -50,20 +75,21 @@ void UpdateState(void)
 {
 }
 
-void UpdateDrawFrame(void)
+void UpdateGameFrame(void)
 {
-    BeginDrawing();
-    ClearBackground(GRAY);
-    ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+    ClearBackground(GRAY);  // Clear render texture background color
 
-            if (GuiButton((Rectangle){ 24, 24, 120, 30 }, "#191#Show Message")) showMessageBox = true;
+    DrawText("If executed inside a window,\nyou can resize the window,\nand see the screen scaling!", 10, 25, 20, BLACK);
 
-            if (showMessageBox)
+    if (GuiButton((Rectangle){ 24, 24, 120, 30 }, "#191#Show Message")) showMessageBox = !showMessageBox;
+
+    if (showMessageBox)
             {
-                int result = GuiMessageBox((Rectangle){ 85, 70, 250, 100 },
-                    "#191#Message Box", "Hi! This is a message!", "Nice;Cool");
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
+                int result = GuiMessageBox((Rectangle){ (float)GetScreenWidth()/2 - 125, (float)GetScreenHeight()/2 - 50, 250, 100 }, GuiIconText(ICON_EXIT, "Close Window"), "Do you really want to exit?", "Yes;No");
 
-                if (result >= 0) showMessageBox = false;
+                if ((result == 0) || (result == 2)) showMessageBox = false;
             }
-    EndDrawing();
+
+    GuiTextBox((Rectangle){ 678, 25, 258, 492 }, "textBoxMultiText", 1024, false);
 }
