@@ -6,7 +6,7 @@
             "command": "gcc",
             "dependsOn": ["create directories"],
             "args": [
-                "main.cpp",
+                "${workspaceFolder}/*.cpp",
                 "-std=c++14",
                 "-ggdb",
                 "-lraylib",
@@ -35,7 +35,7 @@
             "type": "shell",
             "label": "emscripten build project",
             "dependsOn": ["build emscripten image", "create directories"],
-            "command": "docker run --rm -v $(pwd):/src raylib_wasm emcc -o build/web/index.html main.cpp -Os -Wall /raylib/build/raylib/libraylib.a  -I. -I /raylib/build/raylib/include -I /raylib/src/external --preload-file resources -s USE_GLFW=3  -s ASYNCIFY --shell-file /raylib/src/minshell.html -DPLATFORM_WEB",
+            "command": "docker run --rm -v $(pwd):/src raylib_wasm emcc -o build/web/index.html *.cpp -Os -Wall /raylib/build/raylib/libraylib.a  -I. -I /raylib/build/raylib/include -I /raylib/src/external --preload-file resources -s USE_GLFW=3  -s ASYNCIFY --shell-file /raylib/src/minshell.html -DPLATFORM_WEB",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
