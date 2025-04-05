@@ -2,6 +2,7 @@
 // Framework includes & definitions
 //-------------------------------------------
 
+#include <vector>
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
@@ -26,9 +27,14 @@ float scale;
 
 // Misc. dev variables
 bool showMessageBox = false;
+std::vector<Drone> drones = {};
+Drone* activeDrone;
 Drone sampleDrone;
+Drone secondDrone;
 
+std::vector<Vector2> previous_positions = {};
 Vector2 previous_position;
+Vector2 previous_position2;
 Rectangle obstacle;
 
 //----------------------------------------------------------------------------------
@@ -93,32 +99,38 @@ int main(void)
 //----------------------------------------------------------------------------------
 
 void InitGameState(void){
-    sampleDrone = {Vector2{screenWidth/2, screenHeight/2}, 1, 0.f, 100, 60, 60};
+    drones.push_back({Vector2{screenWidth/2, screenHeight/4}, 1, 0.f, 100, 60, 60});
+    drones.push_back({Vector2{screenWidth/2, screenHeight/2}, 1, 0.f, 100, 60, 60});
+    previous_positions.push_back({screenWidth/2, screenHeight/4});
+    previous_positions.push_back({screenWidth/2, screenHeight/2});
+    activeDrone = &drones[0];
     obstacle = {20, 20, 200, 200};
 }
 
 void UpdateState(void){
-    if (IsKeyDown(KEY_D)) RotateDrone(&sampleDrone, 1); 
-    if (IsKeyDown(KEY_A)) RotateDrone(&sampleDrone, -1); 
-    if (IsKeyDown(KEY_W)) AdvanceDrone(&sampleDrone, 1); 
-    if (IsKeyDown(KEY_S)) AdvanceDrone(&sampleDrone, -1); 
+    if (IsKeyDown(KEY_D)) RotateDrone(activeDrone, 1); 
+    if (IsKeyDown(KEY_A)) RotateDrone(activeDrone, -1); 
+    if (IsKeyDown(KEY_W)) AdvanceDrone(activeDrone, 1); 
+    if (IsKeyDown(KEY_S)) AdvanceDrone(activeDrone, -1); 
 }
 
 void HandleCollisions(void){
-    bool collision = CheckCollisionCircleRec(sampleDrone.position, sampleDrone.size*32, obstacle);
-    if (!collision) previous_position = sampleDrone.position;
-    else {
-        Vector2 currentPosition = sampleDrone.position;
-        sampleDrone.position.x = previous_position.x;
-        collision = CheckCollisionCircleRec(sampleDrone.position, sampleDrone.size*32, obstacle);
-        if (!collision) return;
+    for(int i=0; i<drones.size(); i++) {
+        bool collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*32, obstacle);
+        if (!collision) previous_positions[i] = drones[i].position;
+        else {
+            Vector2 currentPosition = drones[i].position;
+            drones[i].position.x = previous_positions[i].x;
+            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*32, obstacle);
+            if (!collision) return;
 
-        sampleDrone.position = currentPosition;
-        sampleDrone.position.y = previous_position.y;
-        collision = CheckCollisionCircleRec(sampleDrone.position, sampleDrone.size*32, obstacle);
-        if (!collision) return;
+            drones[i].position = currentPosition;
+            drones[i].position.y = previous_positions[i].y;
+            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*32, obstacle);
+            if (!collision) return;
 
-        sampleDrone.position = previous_position;
+            drones[i].position = previous_positions[i];
+        }
     }
 }
 
@@ -126,7 +138,8 @@ void UpdateGameFrame(void)
 {
     ClearBackground(LIGHTGRAY);  // Clear render texture background color
     DrawRectangleRec(obstacle, DARKGRAY);
-    RenderDrone(&sampleDrone);
+    
+    for(Drone i : drones) RenderDrone(&i);
 
     if (GuiTextBox((Rectangle){ 1, 1, (int)(screenWidth/5), (int)(screenHeight/10) }, "#191#Show Message", 100, false)) showMessageBox = !showMessageBox;
     GuiTextBox((Rectangle){ (int)(screenWidth/4)*3, 1, (int)(screenWidth/4), (int)(screenHeight/3) }, "textBoxMultiText", 1024, false);

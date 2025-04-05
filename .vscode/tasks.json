@@ -16,6 +16,7 @@
                 "-ldl",
                 "-lrt",
                 "-lX11",
+                "-lstdc++",
                 "-o",
                 "build/linux/main"
             ],
