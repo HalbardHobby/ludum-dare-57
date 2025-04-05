@@ -51,6 +51,10 @@ int main(void)
         UpdateGameFrame();
         EndTextureMode();
 
+        // Scale Mouse position to work with raygui.
+        SetMouseOffset(-(GetScreenWidth() - (screenWidth*scale))*0.5f, -(GetScreenHeight() - (screenHeight*scale))*0.5f);
+        SetMouseScale(1/scale, 1/scale);
+
         BeginDrawing();
         ClearBackground(GRAY);
         ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
@@ -82,14 +86,6 @@ void UpdateGameFrame(void)
     DrawText("If executed inside a window,\nyou can resize the window,\nand see the screen scaling!", 10, 25, 20, BLACK);
 
     if (GuiButton((Rectangle){ 24, 24, 120, 30 }, "#191#Show Message")) showMessageBox = !showMessageBox;
-
-    if (showMessageBox)
-            {
-                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RAYWHITE, 0.8f));
-                int result = GuiMessageBox((Rectangle){ (float)GetScreenWidth()/2 - 125, (float)GetScreenHeight()/2 - 50, 250, 100 }, GuiIconText(ICON_EXIT, "Close Window"), "Do you really want to exit?", "Yes;No");
-
-                if ((result == 0) || (result == 2)) showMessageBox = false;
-            }
 
     GuiTextBox((Rectangle){ 678, 25, 258, 492 }, "textBoxMultiText", 1024, false);
 }
