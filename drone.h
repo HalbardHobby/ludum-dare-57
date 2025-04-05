@@ -15,6 +15,6 @@ typedef struct {
     float rotationSpeed;
 } Drone;
 
-void Advance(Drone* drone, int direction);
-void Rotate(Drone* drone, int direction);
-void Render(Drone* drone);
+void AdvanceDrone(Drone* drone, int direction);
+void RotateDrone(Drone* drone, int direction);
+void RenderDrone(Drone* drone);

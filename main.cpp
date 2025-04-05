@@ -18,8 +18,8 @@
 //----------------------------------------------------------------------------------
 const int windowWidth = 1280;
 const int windowHeight = 720;
-const int screenWidth = 640;
-const int screenHeight = 360;
+const int screenWidth = 320;
+const int screenHeight = 180;
 
 RenderTexture2D target;     // Virtual screen for letterbox scaling
 float scale;
@@ -91,16 +91,16 @@ void InitGameState(void){
 }
 
 void UpdateState(void){
-    if (IsKeyDown(KEY_D)) Rotate(&sampleDrone, 1); 
-    if (IsKeyDown(KEY_A)) Rotate(&sampleDrone, -1); 
-    if (IsKeyDown(KEY_W)) Advance(&sampleDrone, 1); 
-    if (IsKeyDown(KEY_S)) Advance(&sampleDrone, -1); 
+    if (IsKeyDown(KEY_D)) RotateDrone(&sampleDrone, 1); 
+    if (IsKeyDown(KEY_A)) RotateDrone(&sampleDrone, -1); 
+    if (IsKeyDown(KEY_W)) AdvanceDrone(&sampleDrone, 1); 
+    if (IsKeyDown(KEY_S)) AdvanceDrone(&sampleDrone, -1); 
 }
 
 void UpdateGameFrame(void)
 {
-    ClearBackground(GRAY);  // Clear render texture background color½
-    Render(&sampleDrone);
+    ClearBackground(LIGHTGRAY);  // Clear render texture background color½
+    RenderDrone(&sampleDrone);
 
     if (GuiTextBox((Rectangle){ 1, 1, (int)(screenWidth/5), (int)(screenHeight/10) }, "#191#Show Message", 100, false)) showMessageBox = !showMessageBox;
     GuiTextBox((Rectangle){ (int)(screenWidth/4)*3, 1, (int)(screenWidth/4), (int)(screenHeight/3) }, "textBoxMultiText", 1024, false);
