@@ -28,13 +28,9 @@ float scale;
 // Misc. dev variables
 bool showMessageBox = false;
 std::vector<Drone> drones = {};
-Drone* activeDrone;
-Drone sampleDrone;
-Drone secondDrone;
+int activeDroneId;
 
 std::vector<Vector2> previous_positions = {};
-Vector2 previous_position;
-Vector2 previous_position2;
 Rectangle obstacle;
 
 //----------------------------------------------------------------------------------
@@ -103,15 +99,20 @@ void InitGameState(void){
     drones.push_back({Vector2{screenWidth/2, screenHeight/2}, 1, 0.f, 100, 60, 60});
     previous_positions.push_back({screenWidth/2, screenHeight/4});
     previous_positions.push_back({screenWidth/2, screenHeight/2});
-    activeDrone = &drones[0];
+    activeDroneId = 0;
     obstacle = {20, 20, 200, 200};
 }
 
 void UpdateState(void){
-    if (IsKeyDown(KEY_D)) RotateDrone(activeDrone, 1); 
-    if (IsKeyDown(KEY_A)) RotateDrone(activeDrone, -1); 
-    if (IsKeyDown(KEY_W)) AdvanceDrone(activeDrone, 1); 
-    if (IsKeyDown(KEY_S)) AdvanceDrone(activeDrone, -1); 
+    if (IsKeyDown(KEY_D)) RotateDrone(&drones[activeDroneId], 1); 
+    if (IsKeyDown(KEY_A)) RotateDrone(&drones[activeDroneId], -1); 
+    if (IsKeyDown(KEY_W)) AdvanceDrone(&drones[activeDroneId], 1); 
+    if (IsKeyDown(KEY_S)) AdvanceDrone(&drones[activeDroneId], -1);
+
+    if (IsKeyPressed(KEY_TAB)){
+        activeDroneId++;
+        activeDroneId %= drones.size();
+    }
 }
 
 void HandleCollisions(void){
