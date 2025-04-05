@@ -25,6 +25,8 @@ const int screenHeight = 360;
 RenderTexture2D target;     // Virtual screen for letterbox scaling
 float scale;
 
+Camera2D camera;
+
 // Misc. dev variables
 bool showMessageBox = false;
 std::vector<Drone> drones = {};
@@ -101,6 +103,12 @@ void InitGameState(void){
     previous_positions.push_back({screenWidth/2, screenHeight/2});
     activeDroneId = 0;
     obstacle = {20, 20, 200, 200};
+
+    camera = {0};
+    camera.target = drones[activeDroneId].position;
+    camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
 }
 
 void UpdateState(void){
@@ -138,9 +146,14 @@ void HandleCollisions(void){
 void UpdateGameFrame(void)
 {
     ClearBackground(LIGHTGRAY);  // Clear render texture background color
+
+    camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+    camera.target = drones[activeDroneId].position;
+
+    BeginMode2D(camera);
     DrawRectangleRec(obstacle, DARKGRAY);
-    
     for(Drone i : drones) RenderDrone(&i);
+    EndMode2D();
 
     if (GuiTextBox((Rectangle){ 1, 1, (int)(screenWidth/5), (int)(screenHeight/10) }, "#191#Show Message", 100, false)) showMessageBox = !showMessageBox;
     GuiTextBox((Rectangle){ (int)(screenWidth/4)*3, 1, (int)(screenWidth/4), (int)(screenHeight/3) }, "textBoxMultiText", 1024, false);
