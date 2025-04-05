@@ -4,6 +4,7 @@
 *
 ********************************************************************************************/
 #include "drone.h"
+#include "map.h"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -21,7 +22,7 @@ void RotateDrone(Drone* drone, int direction){
 
 void RenderDrone(Drone* drone){
     // Execute Render
-    DrawPoly(drone->position, 6, drone->size*32, drone->rotation, RED);
+    DrawPoly(drone->position, 6, drone->size*TILE_SIZE, drone->rotation, RED);
     Vector2 dir{0, 32};
     dir = Vector2Rotate(dir, drone->rotation*(PI / 180));
     dir = Vector2Add(drone->position, dir);

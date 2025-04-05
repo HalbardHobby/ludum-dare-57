@@ -13,14 +13,15 @@
 //-------------------------------------------
 
 #include "drone.h"
+#include "map.h"
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 const int windowWidth = 1280;
 const int windowHeight = 720;
-const int screenWidth = 640;
-const int screenHeight = 360;
+const int screenWidth = 320;
+const int screenHeight = 180;
 
 RenderTexture2D target;     // Virtual screen for letterbox scaling
 float scale;
@@ -31,6 +32,7 @@ Camera2D camera;
 bool showMessageBox = false;
 std::vector<Drone> drones = {};
 int activeDroneId;
+char* updatetext = "Notificacion2\nNotificacion3\nNotificacion4\nNotificacion5\nNotificacion5\n";
 
 std::vector<Vector2> previous_positions = {};
 Rectangle obstacle;
@@ -97,12 +99,12 @@ int main(void)
 //----------------------------------------------------------------------------------
 
 void InitGameState(void){
-    drones.push_back({Vector2{screenWidth/2, screenHeight/4}, 1, 0.f, 100, 60, 60});
-    drones.push_back({Vector2{screenWidth/2, screenHeight/2}, 1, 0.f, 100, 60, 60});
+    drones.push_back({Vector2{screenWidth/2, screenHeight/4}, 2, 0.f, 100, 60, 60});
+    drones.push_back({Vector2{screenWidth/2, screenHeight/2}, 2, 0.f, 100, 60, 60});
     previous_positions.push_back({screenWidth/2, screenHeight/4});
     previous_positions.push_back({screenWidth/2, screenHeight/2});
     activeDroneId = 0;
-    obstacle = {20, 20, 200, 200};
+    obstacle = {2, 20, 100, 100};
 
     camera = {0};
     camera.target = drones[activeDroneId].position;
@@ -125,17 +127,17 @@ void UpdateState(void){
 
 void HandleCollisions(void){
     for(int i=0; i<drones.size(); i++) {
-        bool collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*32, obstacle);
+        bool collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*TILE_SIZE, obstacle);
         if (!collision) previous_positions[i] = drones[i].position;
         else {
             Vector2 currentPosition = drones[i].position;
             drones[i].position.x = previous_positions[i].x;
-            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*32, obstacle);
+            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*TILE_SIZE, obstacle);
             if (!collision) return;
 
             drones[i].position = currentPosition;
             drones[i].position.y = previous_positions[i].y;
-            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*32, obstacle);
+            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*TILE_SIZE, obstacle);
             if (!collision) return;
 
             drones[i].position = previous_positions[i];
@@ -155,6 +157,11 @@ void UpdateGameFrame(void)
     for(Drone i : drones) RenderDrone(&i);
     EndMode2D();
 
-    if (GuiTextBox((Rectangle){ 1, 1, (int)(screenWidth/5), (int)(screenHeight/10) }, "#191#Show Message", 100, false)) showMessageBox = !showMessageBox;
-    GuiTextBox((Rectangle){ (int)(screenWidth/4)*3, 1, (int)(screenWidth/4), (int)(screenHeight/3) }, "textBoxMultiText", 1024, false);
+    GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_TOP);   // WARNING: Word-wrap does not work as expected in case of no-top alignment
+    GuiSetStyle(DEFAULT, TEXT_WRAP_MODE, TEXT_WRAP_WORD);
+    GuiTextBox((Rectangle){ (int)(screenWidth/3)*2, 1, (int)(screenWidth/3)-1, (int)(screenHeight/2) }, updatetext, 1024, false);
+
+    GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_TOP);
+    GuiToggleGroup((Rectangle){ 1, 1, 80, 20 }, "#1#ONE\n#3#TWO", &activeDroneId);
+    //GuiDisable();
 }
