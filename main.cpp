@@ -18,15 +18,18 @@
 //----------------------------------------------------------------------------------
 const int windowWidth = 1280;
 const int windowHeight = 720;
-const int screenWidth = 320;
-const int screenHeight = 180;
+const int screenWidth = 640;
+const int screenHeight = 360;
 
 RenderTexture2D target;     // Virtual screen for letterbox scaling
 float scale;
 
+// Misc. dev variables
 bool showMessageBox = false;
-
 Drone sampleDrone;
+
+Vector2 previous_position;
+Rectangle obstacle;
 
 //----------------------------------------------------------------------------------
 // Module functions declaration
@@ -34,6 +37,8 @@ Drone sampleDrone;
 void InitGameState(void);
 void UpdateGameFrame(void);     // Update and draw the game frame
 void UpdateState(void);
+
+void HandleCollisions(void);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -57,6 +62,7 @@ int main(void)
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         UpdateState();
+        HandleCollisions();
         
         BeginTextureMode(target);
         UpdateGameFrame();
@@ -88,6 +94,7 @@ int main(void)
 
 void InitGameState(void){
     sampleDrone = {Vector2{screenWidth/2, screenHeight/2}, 1, 0.f, 100, 60, 60};
+    obstacle = {20, 20, 200, 200};
 }
 
 void UpdateState(void){
@@ -97,9 +104,28 @@ void UpdateState(void){
     if (IsKeyDown(KEY_S)) AdvanceDrone(&sampleDrone, -1); 
 }
 
+void HandleCollisions(void){
+    bool collision = CheckCollisionCircleRec(sampleDrone.position, sampleDrone.size*32, obstacle);
+    if (!collision) previous_position = sampleDrone.position;
+    else {
+        Vector2 currentPosition = sampleDrone.position;
+        sampleDrone.position.x = previous_position.x;
+        collision = CheckCollisionCircleRec(sampleDrone.position, sampleDrone.size*32, obstacle);
+        if (!collision) return;
+
+        sampleDrone.position = currentPosition;
+        sampleDrone.position.y = previous_position.y;
+        collision = CheckCollisionCircleRec(sampleDrone.position, sampleDrone.size*32, obstacle);
+        if (!collision) return;
+
+        sampleDrone.position = previous_position;
+    }
+}
+
 void UpdateGameFrame(void)
 {
-    ClearBackground(LIGHTGRAY);  // Clear render texture background color½
+    ClearBackground(LIGHTGRAY);  // Clear render texture background color
+    DrawRectangleRec(obstacle, DARKGRAY);
     RenderDrone(&sampleDrone);
 
     if (GuiTextBox((Rectangle){ 1, 1, (int)(screenWidth/5), (int)(screenHeight/10) }, "#191#Show Message", 100, false)) showMessageBox = !showMessageBox;
