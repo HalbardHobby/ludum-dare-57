@@ -1,0 +1,68 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "gcc build project",
+            "command": "gcc",
+            "dependsOn": ["create directories"],
+            "args": [
+                "main.cpp",
+                "-std=c++14",
+                "-ggdb",
+                "-lraylib",
+                "-lGL",
+                "-lm",
+                "-lpthread",
+                "-ldl",
+                "-lrt",
+                "-lX11",
+                "-o",
+                "build/linux/main"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Build linux binary."
+        },
+        {
+            "type": "shell",
+            "label": "emscripten build project",
+            "dependsOn": ["build emscripten image", "create directories"],
+            "command": "docker run --rm -v $(pwd):/src raylib_wasm emcc -o build/web/index.html main.cpp -Os -Wall /raylib/build/raylib/libraylib.a  -I. -I /raylib/build/raylib/include -I /raylib/src/external --preload-file resources -s USE_GLFW=3  -s ASYNCIFY --shell-file /raylib/src/minshell.html -DPLATFORM_WEB",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "detail": "Build web assembly project."
+        },
+        {
+            "type": "docker-build",
+            "label": "build emscripten image",
+            "dockerBuild": {
+                "context": "${workspaceFolder}",
+                "dockerfile": "${workspaceFolder}/Dockerfile",
+                "tag": "raylib_wasm"
+            },
+            "detail": "Build docker image needed for webassembly."
+        },
+        {
+            "type": "shell",
+            "label": "create directories",
+            "command": "mkdir -p ${workspaceFolder}/build/linux && mkdir -p ${workspaceFolder}/build/web",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+        }
+    ],
+    "version": "2.0.0"
+}
