@@ -8,6 +8,8 @@
 #include "raygui.h"
 #define MIN(a, b) ((a)<(b)? (a) : (b))
 
+#include <stdlib.h>
+
 //-------------------------------------------
 // Game Related imports & Definitions
 //-------------------------------------------
@@ -23,6 +25,8 @@ const int windowHeight = 720;
 const int screenWidth = 320;
 const int screenHeight = 180;
 
+Map map;                    // Map and Fog of war
+RenderTexture2D fogOfWar;
 RenderTexture2D target;     // Virtual screen for letterbox scaling
 float scale;
 
@@ -62,6 +66,10 @@ int main(void)
     SetTextureFilter(target.texture, TEXTURE_FILTER_POINT);  // Texture scale filter to use
     scale = MIN((float)GetScreenWidth()/screenWidth, (float)GetScreenHeight()/screenHeight);
 
+    // Filter texture initialization for Fog of war
+    fogOfWar = LoadRenderTexture(MAP_SIZE_X, MAP_SIZE_Y);
+    SetTextureFilter(fogOfWar.texture, TEXTURE_FILTER_POINT);
+
     SetTargetFPS(60);   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -69,7 +77,7 @@ int main(void)
     {
         UpdateState();
         HandleCollisions();
-        
+
         BeginTextureMode(target);
         UpdateGameFrame();
         EndTextureMode();
@@ -99,13 +107,20 @@ int main(void)
 //----------------------------------------------------------------------------------
 
 void InitGameState(void){
-    drones.push_back({Vector2{screenWidth/2, screenHeight/4}, 2, 0.f, 100, 60, 60});
-    drones.push_back({Vector2{screenWidth/2, screenHeight/2}, 2, 0.f, 100, 60, 60});
+    drones.push_back({Vector2{screenWidth/2, 90}, 2, 0.f, 100, 60, 60});
+    drones.push_back({Vector2{screenWidth/2, 120}, 2, 0.f, 100, 60, 60});
     previous_positions.push_back({screenWidth/2, screenHeight/4});
     previous_positions.push_back({screenWidth/2, screenHeight/2});
     activeDroneId = 0;
+    
     obstacle = {2, 20, 100, 100};
 
+    map = {0};
+    map.tilesX = MAP_SIZE_X;
+    map.tilesY = MAP_SIZE_Y;
+    map.tileIds = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
+    map.tileFog = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
+    
     camera = {0};
     camera.target = drones[activeDroneId].position;
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
@@ -123,6 +138,28 @@ void UpdateState(void){
         activeDroneId++;
         activeDroneId %= drones.size();
     }
+
+    // Obtener posición en terminos de la cuadricula para cada dron
+    Vector2 positions[drones.size()];
+    for(int i=0; i<drones.size(); i++){
+        positions[i].x = (int)((drones[i].position.x + TILE_SIZE/2)/TILE_SIZE);
+        positions[i].y = (int)((drones[i].position.y + TILE_SIZE/2)/TILE_SIZE);
+    }
+    // Iterar sobre la grilla y marcar los visitados
+    for(Vector2 p: positions){
+        for (int y = (p.y - PLAYER_TILE_VISIBILITY); y < (p.y + PLAYER_TILE_VISIBILITY); y++)
+            for (int x = (p.x - PLAYER_TILE_VISIBILITY); x < (p.x + PLAYER_TILE_VISIBILITY); x++)
+                if ((x >= 0) && (x < (int)map.tilesX) && (y >= 0) && (y < (int)map.tilesY)) map.tileFog[y*map.tilesX + x] = 1;
+    }
+
+
+    BeginTextureMode(fogOfWar);
+        ClearBackground(BLANK);
+        for (unsigned int y = 0; y < map.tilesY; y++)
+            for (unsigned int x = 0; x < map.tilesX; x++)
+                if (map.tileFog[y*map.tilesX + x] == 0) DrawRectangle(x, y, 1, 1, BLACK);
+                else if (map.tileFog[y*map.tilesX + x] == 2) DrawRectangle(x, y, 1, 1, Fade(BLACK, 0.87f));
+    EndTextureMode();
 }
 
 void HandleCollisions(void){
@@ -152,16 +189,31 @@ void UpdateGameFrame(void)
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera.target = drones[activeDroneId].position;
 
+    // Update game world
     BeginMode2D(camera);
-    DrawRectangleRec(obstacle, DARKGRAY);
-    for(Drone i : drones) RenderDrone(&i);
+        DrawRectangleRec(obstacle, DARKGRAY);
+    
+        // Draw fog of war (scaled to full map, bilinear filtering)
+        DrawTexturePro(fogOfWar.texture, (Rectangle){ 0, 0, (float)fogOfWar.texture.width, (float)-fogOfWar.texture.height },
+                        (Rectangle){ 0, 0, (float)TILE_SIZE*MAP_SIZE_X, (float)TILE_SIZE*MAP_SIZE_Y },
+                        (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+        for(Drone i : drones) RenderDrone(&i);
+
+        //Update Fog of war
+        for (int i = 0; i < map.tilesX*map.tilesY; i++) 
+            if (map.tileFog[i] == 1) 
+                map.tileFog[i] = 2;
+
     EndMode2D();
 
+    // update UI
+    GuiLoadStyleDefault();
     GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_TOP);   // WARNING: Word-wrap does not work as expected in case of no-top alignment
     GuiSetStyle(DEFAULT, TEXT_WRAP_MODE, TEXT_WRAP_WORD);
-    GuiTextBox((Rectangle){ (int)(screenWidth/3)*2, 1, (int)(screenWidth/3)-1, (int)(screenHeight/2) }, updatetext, 1024, false);
+    GuiTextBox((Rectangle){ (int)(screenWidth/3)*2, 1, (int)(screenWidth/3), (int)(screenHeight/2) }, updatetext, 1024, false);
 
-    GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_TOP);
+    GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_CENTER);
     GuiToggleGroup((Rectangle){ 1, 1, 80, 20 }, "#1#ONE\n#3#TWO", &activeDroneId);
     //GuiDisable();
 }
