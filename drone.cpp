@@ -15,5 +15,5 @@ void Rotate(Drone* drone, int direction){
 
 void Render(Drone* drone){
     // Execute Render
-    DrawPoly(drone->position, 5, drone->size, drone->rotation, RED);
+    DrawPoly(drone->position, 5, drone->size*32, drone->rotation, RED);
 }

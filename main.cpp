@@ -1,27 +1,37 @@
-#include "raylib.h"
+//-------------------------------------------
+// Framework includes & definitions
+//-------------------------------------------
 
+#include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
-
 #define MIN(a, b) ((a)<(b)? (a) : (b))
+
+//-------------------------------------------
+// Game Related imports & Definitions
+//-------------------------------------------
+
+#include "drone.h"
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 const int windowWidth = 1280;
 const int windowHeight = 720;
-const int screenWidth = 320;
-const int screenHeight = 180;
+const int screenWidth = 640;
+const int screenHeight = 360;
 
 RenderTexture2D target;     // Virtual screen for letterbox scaling
 float scale;
 
 bool showMessageBox = false;
 
+Drone sampleDrone;
 
 //----------------------------------------------------------------------------------
 // Module functions declaration
 //----------------------------------------------------------------------------------
+void InitGameState(void);
 void UpdateGameFrame(void);     // Update and draw the game frame
 void UpdateState(void);
 
@@ -34,6 +44,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     InitWindow(windowWidth, windowHeight, "base");
     InitAudioDevice();
+    InitGameState();
 
     // Render texture initialization, used to hold the rendering result so we can easily resize it
     RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
@@ -75,17 +86,19 @@ int main(void)
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 
+void InitGameState(void){
+    sampleDrone = {Vector2{screenWidth/2, screenHeight/2}, 1, 0.f, 0, 0, 0};
+}
+
 void UpdateState(void)
 {
 }
 
 void UpdateGameFrame(void)
 {
-    ClearBackground(GRAY);  // Clear render texture background color
+    ClearBackground(GRAY);  // Clear render texture background color½
+    Render(&sampleDrone);
 
-    DrawText("If executed inside a window,\nyou can resize the window,\nand see the screen scaling!", 10, 25, 20, BLACK);
-
-    if (GuiButton((Rectangle){ 24, 24, 120, 30 }, "#191#Show Message")) showMessageBox = !showMessageBox;
-
-    GuiTextBox((Rectangle){ 678, 25, 258, 492 }, "textBoxMultiText", 1024, false);
+    if (GuiTextBox((Rectangle){ 1, 1, (int)(screenWidth/5), (int)(screenHeight/10) }, "#191#Show Message", 100, false)) showMessageBox = !showMessageBox;
+    GuiTextBox((Rectangle){ (int)(screenWidth/4)*3, 1, (int)(screenWidth/4), (int)(screenHeight/3) }, "textBoxMultiText", 1024, false);
 }
