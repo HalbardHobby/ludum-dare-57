@@ -9,6 +9,7 @@
 #define MIN(a, b) ((a)<(b)? (a) : (b))
 
 #include <stdlib.h>
+#include <math.h>
 
 //-------------------------------------------
 // Game Related imports & Definitions
@@ -145,12 +146,30 @@ void UpdateState(void){
         positions[i].x = (int)((drones[i].position.x + TILE_SIZE/2)/TILE_SIZE);
         positions[i].y = (int)((drones[i].position.y + TILE_SIZE/2)/TILE_SIZE);
     }
+
     // Iterar sobre la grilla y marcar los visitados
     for(Vector2 p: positions){
-        for (int y = (p.y - PLAYER_TILE_VISIBILITY); y < (p.y + PLAYER_TILE_VISIBILITY); y++)
-            for (int x = (p.x - PLAYER_TILE_VISIBILITY); x < (p.x + PLAYER_TILE_VISIBILITY); x++)
-                if ((x >= 0) && (x < (int)map.tilesX) && (y >= 0) && (y < (int)map.tilesY)) map.tileFog[y*map.tilesX + x] = 1;
-    }
+        // Create FoV polygon
+        Vector2 polygon[5];
+        polygon[0] = p;
+        float degreeStep = PLAYER_VIEW_ANGLE/4;
+        float angle = 0;
+        for(int i=1; i<5; i++){
+            polygon[i] = {p.x + cosf(DEG2RAD*angle)*PLAYER_TILE_VISIBILITY,
+                          p.y + sinf(DEG2RAD*angle)*PLAYER_TILE_VISIBILITY};
+            angle += degreeStep;
+        }
+
+        for (float y = (p.y - PLAYER_TILE_VISIBILITY); y < (p.y + PLAYER_TILE_VISIBILITY); y++)
+            for (float x = (p.x - PLAYER_TILE_VISIBILITY); x < (p.x + PLAYER_TILE_VISIBILITY); x++){
+                if ((x >= 0) && (x < (int)map.tilesX) && (y >= 0) && (y < (int)map.tilesY)){
+                    Vector2 tile_coordinate = {x+0.5f, y+0.5f};
+                    if (CheckCollisionPointPoly(tile_coordinate, polygon, 5))
+                        map.tileFog[(int)(y*map.tilesX + x)] = 1;
+                } 
+            }
+        }
+
 
 
     BeginTextureMode(fogOfWar);
