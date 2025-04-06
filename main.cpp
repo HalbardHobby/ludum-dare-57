@@ -124,12 +124,12 @@ void InitGameState(void){
     
     for (unsigned int y = 0; y < map.tilesY; y++){
         for (unsigned int x = 0; x < map.tilesX; x++){
+            // TODO: init skips every 2 lines
             int tile_x = x/2;
             int tile_y = y/2;
-            map.tileIds[y*MAP_SIZE_X + x] = (sampleMap[tile_y*MAP_SIZE_X + tile_x]=='1')? 1 : 0;
+            map.tileIds[y*map.tilesX + x] = (sampleMap[tile_y*map.tilesX + tile_x]=='1')? 1 : 0;
         }
     }
-    
 
     camera = {0};
     camera.target = drones[activeDroneId].position;
