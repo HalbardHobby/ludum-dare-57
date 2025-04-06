@@ -110,8 +110,8 @@ int main(void)
 void InitGameState(void){
     drones.push_back({Vector2{screenWidth/2, 90}, 3, 0.f, 100, 60, 60});
     drones.push_back({Vector2{screenWidth/2, 120}, 3, 0.f, 100, 60, 60});
-    previous_positions.push_back({screenWidth/2, screenHeight/4});
-    previous_positions.push_back({screenWidth/2, screenHeight/2});
+    previous_positions.push_back(Vector2{screenWidth/2, 90});
+    previous_positions.push_back(Vector2{screenWidth/2, 120});
     activeDroneId = 0;
     
     InitMap(&map);
@@ -174,21 +174,40 @@ void UpdateState(void){
 
 void HandleCollisions(void){
     for(int i=0; i<drones.size(); i++) {
-        bool collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*TILE_SIZE, obstacle);
-        if (!collision) previous_positions[i] = drones[i].position;
-        else {
-            Vector2 currentPosition = drones[i].position;
-            drones[i].position.x = previous_positions[i].x;
-            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*TILE_SIZE, obstacle);
-            if (!collision) return;
+        // obtener las celdas alrededor del personaje
+        Vector2 p = drones[i].position;
+        p.x = (int)((p.x + TILE_SIZE/2)/TILE_SIZE);
+        p.y = (int)((p.y + TILE_SIZE/2)/TILE_SIZE);
+        int collisionRange = drones[i].size + 2;
 
-            drones[i].position = currentPosition;
-            drones[i].position.y = previous_positions[i].y;
-            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*TILE_SIZE, obstacle);
-            if (!collision) return;
+        for (int y = (int)(p.y - collisionRange); y < (int)(p.y + collisionRange); y++)
+            for (int x = (int)(p.x - collisionRange); x < (int)(p.x + collisionRange); x++)
+                if ((x >= 0) && (x < map.tilesX) && (y >= 0) && (y < map.tilesY)){
+                    // obtener celdas con las que puede hacer colisión
+                    if(map.tileIds[(int)(y*map.tilesX + x)] == TYPE_TILE_WALL) {
+                        // iterar cada celda por colisión
+                        float xCoord = x*TILE_SIZE;
+                        float yCoord = y*TILE_SIZE;
+                        Rectangle currentTile = {xCoord, yCoord, TILE_SIZE, TILE_SIZE}; 
+                        bool collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*TILE_SIZE, currentTile);
+                        // Resolver colisión
+                        //if (!collision) previous_positions[i] = drones[i].position;
+                        if (collision) {
+                            Vector2 currentPosition = drones[i].position;
+                            drones[i].position.x = previous_positions[i].x;
+                            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*TILE_SIZE, currentTile);
+                            if (!collision) break;
 
-            drones[i].position = previous_positions[i];
-        }
+                            drones[i].position = currentPosition;
+                            drones[i].position.y = previous_positions[i].y;
+                            collision = CheckCollisionCircleRec(drones[i].position, drones[i].size*TILE_SIZE, currentTile);
+                            if (!collision) break;
+
+                            drones[i].position = previous_positions[i];
+                        }
+                    }         
+                }
+        previous_positions[i] = drones[i].position;
     }
 }
 
