@@ -5,6 +5,7 @@
 ********************************************************************************************/
 #include "map.h"
 #include "raylib.h"
+#include "colors.h"
 #include <stdlib.h>
 
 // TODO: Init skips every 2 lines, duplicated lines to acomodate.
@@ -27,14 +28,14 @@ char *sampleMap =
 "1....111111111....11111111...11....111111111....11111111...11....111111111....11111111...1"
 "1....1......................1.1....1......................1.1....1......................1."
 "1....1......................1.1....1......................1.1....1......................1."
-"1....1....#####............1.11....1.....................1.11....1....#####............1.1"
-"1....1....#####............1.11....1.....................1.11....1....#####............1.1"
+"1....1....#####............1.11....1...............GG....1.11....1....#####............1.1"
+"1....1....#####............1.11....1...............GG....1.11....1....#####............1.1"
 "1....1....#...#............1.11....1....#...#............1.11....1....#...#............1.1"
 "1....1....#...#............1.11....1....#...#............1.11....1....#...#............1.1"
 "1....1....#...#....11111111.1.1....1....#...#....11111111.1.1....1....#...#....11111111.1."
 "1....1....#...#....11111111.1.1....1....#...#....11111111.1.1....1....#...#....11111111.1."
-"1....1....#####....1.......G1.1....1....#####.....1......G1.1....1....#####....1.......G1."
-"1....1....#####....1.......G1.1....1....#####.....1......G1.1....1....#####....1.......G1."
+"1....1....#####....1........1.1....1....#####.....1.......1.1....1....#####....1........1."
+"1....1....#####....1........1.1....1....#####.....1.......1.1....1....#####....1........1."
 "1....1..............1.......1.1....1..............1.......1.1....1..............1.......1."
 "1....1..............1.......1.1....1..............1.......1.1....1..............1.......1."
 "1....1..111111111...1.......1.1....1..111111111...1.......1.1....1..111111111...1.......1."
@@ -201,18 +202,46 @@ void InitMap(Map* map){
             // TODO: init skips every 2 lines
             int tile_x = x/2;
             int tile_y = y/2;
-            map->tileIds[y*map->tilesX + x] = (sampleMap[tile_y*map->tilesX + tile_x]=='1')? 1 : 0;
+            switch (sampleMap[tile_y*map->tilesX + tile_x])
+            {
+            case '1':
+                map->tileIds[y*map->tilesX + x] = TYPE_TILE_WALL;
+            break;
+            case '#':
+                map->tileIds[y*map->tilesX + x] = TYPE_TILE_BREAKABLE;
+            break;
+            case 'G':
+                map->tileIds[y*map->tilesX + x] = TYPE_TILE_OBJECTIVE;
+            break;
+            default:
+                map->tileIds[y*map->tilesX + x] = TYPE_TILE_EMPTY;
+                break;
+            }
         }
     }
 }
 
 void RenderMap(Map *map){
-    for (unsigned int y = 0; y < map->tilesY; y++){
+    for (unsigned int y = 0; y < map->tilesY; y++)
         for (unsigned int x = 0; x < map->tilesX; x++){
-            DrawRectangle(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE, 
-                        (map->tileIds[y*map->tilesX + x] == 0)? BLUE : DARKBLUE);
+            Color c;
+            switch (map->tileIds[y*map->tilesX + x])
+            {
+            case TYPE_TILE_WALL:
+                c = DARK;
+                break;
+            case TYPE_TILE_BREAKABLE:
+                c = MEDIUM;
+                break;
+            case TYPE_TILE_OBJECTIVE:
+                c = HIGHLIGHT;
+                break;
+            default:
+                c = LIGHT;
+                break;
+            }
+            DrawRectangle(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE, c);
         }
-    }
 }
 
 void UpdateFogOfWar(Map *map, RenderTexture2D fogOfWar){
@@ -220,8 +249,7 @@ void UpdateFogOfWar(Map *map, RenderTexture2D fogOfWar){
         ClearBackground(BLANK);
         for (unsigned int y = 0; y < map->tilesY; y++)
             for (unsigned int x = 0; x < map->tilesX; x++)
-                if (map->tileFog[y*map->tilesX + x] == 0) DrawRectangle(x, y, 1, 1, BLACK);
-                else if (map->tileFog[y*map->tilesX + x] == 2) DrawRectangle(x, y, 1, 1, Fade(BLACK, 0.87f));
+                if (map->tileFog[y*map->tilesX + x] == 0) DrawRectangle(x, y, 1, 1, DARK);
     EndTextureMode();
 
     //Update Fog of war

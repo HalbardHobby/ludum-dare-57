@@ -6,6 +6,7 @@
 #include "drone.h"
 #include "raylib.h"
 #include "raymath.h"
+#include "colors.h"
 
 void AdvanceDrone(Drone* drone, int direction){
     // Find velocity vector
@@ -22,9 +23,10 @@ void RotateDrone(Drone* drone, int direction){
 void RenderDrone(Drone* drone){
     // Execute Render
     // TODO: Use Tile size defined in map.h
-    DrawPoly(drone->position, 6, drone->size*4, drone->rotation, RED);
-    Vector2 dir{0, 24};
+    DrawPoly(drone->position, 6, drone->size*4, drone->rotation, MEDIUM);
+    DrawPolyLines(drone->position, 6, drone->size*4, drone->rotation, HIGHLIGHT);
+    Vector2 dir{0, 16};
     dir = Vector2Rotate(dir, drone->rotation*(PI / 180));
     dir = Vector2Add(drone->position, dir);
-    DrawLineV(drone->position, dir, GREEN);
+    DrawLineV(drone->position, dir, HIGHLIGHT);
 }

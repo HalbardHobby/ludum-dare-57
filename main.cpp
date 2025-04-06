@@ -16,6 +16,7 @@
 
 #include "drone.h"
 #include "map.h"
+#include "colors.h"
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -209,11 +210,34 @@ void HandleCollisions(void){
                 }
         previous_positions[i] = drones[i].position;
     }
+
+    // TODO: Handle collision between players
+    /* 
+    for(int i=0; i<drones.size(); i++) {
+        for(int j=0; i<drones.size(); i++) {
+            if (i==j) break;
+            bool collision = CheckCollisionCircles(drones[i].position, drones[i].size*TILE_SIZE, drones[j].position, drones[j].size*TILE_SIZE);
+            if (collision) {
+                Vector2 currentPosition = drones[i].position;
+                drones[i].position.x = previous_positions[i].x;
+                collision = CheckCollisionCircles(drones[i].position, drones[i].size*TILE_SIZE, drones[j].position, drones[j].size*TILE_SIZE);
+                if (!collision) break;
+
+                drones[i].position = currentPosition;
+                drones[i].position.y = previous_positions[i].y;
+                collision = CheckCollisionCircles(drones[i].position, drones[i].size*TILE_SIZE, drones[j].position, drones[j].size*TILE_SIZE);
+                if (!collision) break;
+
+                drones[i].position = previous_positions[i];
+            }
+        }
+    } 
+    */
 }
 
 void UpdateGameFrame(void)
 {
-    ClearBackground(BLACK);  // Clear render texture background color
+    ClearBackground(DARK);  // Clear render texture background color
 
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera.target = drones[activeDroneId].position;
@@ -227,12 +251,14 @@ void UpdateGameFrame(void)
     EndMode2D();
 
     // update UI
+    /* 
     GuiLoadStyleDefault();
     GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_TOP);   // WARNING: Word-wrap does not work as expected in case of no-top alignment
     GuiSetStyle(DEFAULT, TEXT_WRAP_MODE, TEXT_WRAP_WORD);
     GuiTextBox((Rectangle){ (int)(screenWidth/3)*2, 1, (int)(screenWidth/3), (int)(screenHeight/2) }, updatetext, 1024, false);
-
+    */
+   
     GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_CENTER);
-    GuiToggleGroup((Rectangle){ 1, 1, 80, 20 }, "#1#ONE\n#3#TWO", &activeDroneId);
+    GuiToggleGroup((Rectangle){ 1, 1, 80, 20 }, "#3#DRILL\n#1#SCANNER", &activeDroneId);
     //GuiDisable();
 }

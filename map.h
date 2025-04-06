@@ -8,7 +8,10 @@
 #define PLAYER_PASSIVE_VISIBILITY   5
 #define PLAYER_VIEW_ANGLE           60
 
-#define TYPE_TILE_WALL   1
+#define TYPE_TILE_EMPTY     0
+#define TYPE_TILE_WALL      1
+#define TYPE_TILE_BREAKABLE 2
+#define TYPE_TILE_OBJECTIVE 3
 
 typedef struct {
     unsigned int tilesX;            // Number of tiles in X axis
