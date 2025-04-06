@@ -8,7 +8,6 @@
 #include "raygui.h"
 #define MIN(a, b) ((a)<(b)? (a) : (b))
 
-#include <stdlib.h>
 #include <math.h>
 
 //-------------------------------------------
@@ -108,10 +107,11 @@ int main(void)
 //----------------------------------------------------------------------------------
 
 void InitGameState(void){
-    drones.push_back({Vector2{screenWidth/2, 90}, 3, 0.f, 100, 60, 60});
-    drones.push_back({Vector2{screenWidth/2, 120}, 3, 0.f, 100, 60, 60});
-    previous_positions.push_back(Vector2{screenWidth/2, 90});
-    previous_positions.push_back(Vector2{screenWidth/2, 120});
+    // initial postions: (40,3) (50,3)
+    drones.push_back({Vector2{80*TILE_SIZE, 6*TILE_SIZE}, 3, 0.f, 100, 60, 60});
+    drones.push_back({Vector2{100*TILE_SIZE, 6*TILE_SIZE}, 3, 0.f, 100, 60, 60});
+    previous_positions.push_back(Vector2{80*TILE_SIZE, 6*TILE_SIZE});
+    previous_positions.push_back(Vector2{100*TILE_SIZE, 6*TILE_SIZE});
     activeDroneId = 0;
     
     InitMap(&map);
