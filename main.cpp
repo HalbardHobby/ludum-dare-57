@@ -114,22 +114,7 @@ void InitGameState(void){
     previous_positions.push_back({screenWidth/2, screenHeight/2});
     activeDroneId = 0;
     
-    
-    // Init map
-    map = {0};
-    map.tilesX = MAP_SIZE_X;
-    map.tilesY = MAP_SIZE_Y;
-    map.tileIds = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
-    map.tileFog = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
-    
-    for (unsigned int y = 0; y < map.tilesY; y++){
-        for (unsigned int x = 0; x < map.tilesX; x++){
-            // TODO: init skips every 2 lines
-            int tile_x = x/2;
-            int tile_y = y/2;
-            map.tileIds[y*map.tilesX + x] = (sampleMap[tile_y*map.tilesX + tile_x]=='1')? 1 : 0;
-        }
-    }
+    InitMap(&map);
 
     camera = {0};
     camera.target = drones[activeDroneId].position;
@@ -180,19 +165,11 @@ void UpdateState(void){
                     if (CheckCollisionPointPoly(tile_coordinate, polygon, 5) || 
                         CheckCollisionPointCircle(tile_coordinate, p, PLAYER_PASSIVE_VISIBILITY))
                             map.tileFog[(int)(y*map.tilesX + x)] = 1;
-                } 
+                }
             }
         }
 
-
-
-    BeginTextureMode(fogOfWar);
-        ClearBackground(BLANK);
-        for (unsigned int y = 0; y < map.tilesY; y++)
-            for (unsigned int x = 0; x < map.tilesX; x++)
-                if (map.tileFog[y*map.tilesX + x] == 0) DrawRectangle(x, y, 1, 1, BLACK);
-                else if (map.tileFog[y*map.tilesX + x] == 2) DrawRectangle(x, y, 1, 1, Fade(BLACK, 0.87f));
-    EndTextureMode();
+    UpdateFogOfWar(&map, fogOfWar);
 }
 
 void HandleCollisions(void){
@@ -224,25 +201,9 @@ void UpdateGameFrame(void)
 
     // Update game world
     BeginMode2D(camera);
-        for (unsigned int y = 0; y < map.tilesY; y++){
-            for (unsigned int x = 0; x < map.tilesX; x++){
-                DrawRectangle(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE, 
-                            (map.tileIds[y*map.tilesX + x] == 0)? BLUE : DARKBLUE);
-            }
-        }
-
-        DrawRectangleRec(obstacle, DARKGRAY);
-        // Draw fog of war (scaled to full map, bilinear filtering)
-        DrawTexturePro(fogOfWar.texture, (Rectangle){ 0, 0, (float)fogOfWar.texture.width, (float)-fogOfWar.texture.height },
-                        (Rectangle){ 0, 0, (float)TILE_SIZE*MAP_SIZE_X, (float)TILE_SIZE*MAP_SIZE_Y },
-                        (Vector2){ 0, 0 }, 0.0f, WHITE);
-
+        RenderMap(&map);
+        RenderFogOfWar(fogOfWar);
         for(Drone i : drones) RenderDrone(&i);
-
-        //Update Fog of war
-        for (int i = 0; i < map.tilesX*map.tilesY; i++) 
-            if (map.tileFog[i] == 1) 
-                map.tileFog[i] = 2;
 
     EndMode2D();
 
