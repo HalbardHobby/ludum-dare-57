@@ -108,20 +108,29 @@ int main(void)
 //----------------------------------------------------------------------------------
 
 void InitGameState(void){
-    drones.push_back({Vector2{screenWidth/2, 90}, 2, 0.f, 100, 60, 60});
-    drones.push_back({Vector2{screenWidth/2, 120}, 2, 0.f, 100, 60, 60});
+    drones.push_back({Vector2{screenWidth/2, 90}, 3, 0.f, 100, 60, 60});
+    drones.push_back({Vector2{screenWidth/2, 120}, 3, 0.f, 100, 60, 60});
     previous_positions.push_back({screenWidth/2, screenHeight/4});
     previous_positions.push_back({screenWidth/2, screenHeight/2});
     activeDroneId = 0;
     
-    obstacle = {2, 20, 100, 100};
-
+    
+    // Init map
     map = {0};
     map.tilesX = MAP_SIZE_X;
     map.tilesY = MAP_SIZE_Y;
     map.tileIds = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
     map.tileFog = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
     
+    for (unsigned int y = 0; y < map.tilesY; y++){
+        for (unsigned int x = 0; x < map.tilesX; x++){
+            int tile_x = x/2;
+            int tile_y = y/2;
+            map.tileIds[y*MAP_SIZE_X + x] = (sampleMap[tile_y*MAP_SIZE_X + tile_x]=='1')? 1 : 0;
+        }
+    }
+    
+
     camera = {0};
     camera.target = drones[activeDroneId].position;
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
@@ -142,18 +151,22 @@ void UpdateState(void){
 
     // Obtener posición en terminos de la cuadricula para cada dron
     Vector2 positions[drones.size()];
+    float rotations[drones.size()];
     for(int i=0; i<drones.size(); i++){
         positions[i].x = (int)((drones[i].position.x + TILE_SIZE/2)/TILE_SIZE);
         positions[i].y = (int)((drones[i].position.y + TILE_SIZE/2)/TILE_SIZE);
+        rotations[i] = drones[i].rotation;
     }
 
     // Iterar sobre la grilla y marcar los visitados
-    for(Vector2 p: positions){
+    for(int i=0; i<drones.size(); i++){
+        Vector2 p = positions[i];
+        float r = rotations[i];
         // Create FoV polygon
         Vector2 polygon[5];
         polygon[0] = p;
         float degreeStep = PLAYER_VIEW_ANGLE/4;
-        float angle = 0;
+        float angle = r+97.5f-PLAYER_VIEW_ANGLE/2;
         for(int i=1; i<5; i++){
             polygon[i] = {p.x + cosf(DEG2RAD*angle)*PLAYER_TILE_VISIBILITY,
                           p.y + sinf(DEG2RAD*angle)*PLAYER_TILE_VISIBILITY};
@@ -164,8 +177,9 @@ void UpdateState(void){
             for (float x = (p.x - PLAYER_TILE_VISIBILITY); x < (p.x + PLAYER_TILE_VISIBILITY); x++){
                 if ((x >= 0) && (x < (int)map.tilesX) && (y >= 0) && (y < (int)map.tilesY)){
                     Vector2 tile_coordinate = {x+0.5f, y+0.5f};
-                    if (CheckCollisionPointPoly(tile_coordinate, polygon, 5))
-                        map.tileFog[(int)(y*map.tilesX + x)] = 1;
+                    if (CheckCollisionPointPoly(tile_coordinate, polygon, 5) || 
+                        CheckCollisionPointCircle(tile_coordinate, p, PLAYER_PASSIVE_VISIBILITY))
+                            map.tileFog[(int)(y*map.tilesX + x)] = 1;
                 } 
             }
         }
@@ -203,15 +217,21 @@ void HandleCollisions(void){
 
 void UpdateGameFrame(void)
 {
-    ClearBackground(LIGHTGRAY);  // Clear render texture background color
+    ClearBackground(BLACK);  // Clear render texture background color
 
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera.target = drones[activeDroneId].position;
 
     // Update game world
     BeginMode2D(camera);
+        for (unsigned int y = 0; y < map.tilesY; y++){
+            for (unsigned int x = 0; x < map.tilesX; x++){
+                DrawRectangle(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE, 
+                            (map.tileIds[y*map.tilesX + x] == 0)? BLUE : DARKBLUE);
+            }
+        }
+
         DrawRectangleRec(obstacle, DARKGRAY);
-    
         // Draw fog of war (scaled to full map, bilinear filtering)
         DrawTexturePro(fogOfWar.texture, (Rectangle){ 0, 0, (float)fogOfWar.texture.width, (float)-fogOfWar.texture.height },
                         (Rectangle){ 0, 0, (float)TILE_SIZE*MAP_SIZE_X, (float)TILE_SIZE*MAP_SIZE_Y },
