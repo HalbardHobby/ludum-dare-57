@@ -92,6 +92,8 @@ int main(void)
         ClearBackground(GRAY);
         ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
+        DrawRectangleRec((Rectangle){0, 0, windowWidth, windowHeight}, BLACK);
+
         DrawTexturePro(target.texture, (Rectangle){ 0.0f, 0.0f, (float)target.texture.width, (float)-target.texture.height },
                             (Rectangle){ (GetScreenWidth() - ((float)screenWidth*scale))*0.5f, (GetScreenHeight() - ((float)screenHeight*scale))*0.5f,
                             (float)screenWidth*scale, (float)screenHeight*scale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
@@ -126,22 +128,24 @@ void InitGameState(void){
 }
 
 void UpdateState(void){
-    if (!showMessage){
-        if (IsKeyDown(KEY_D)) RotateDrone(&drones[activeDroneId], 1); 
-        if (IsKeyDown(KEY_A)) RotateDrone(&drones[activeDroneId], -1); 
-        if (IsKeyDown(KEY_W)) AdvanceDrone(&drones[activeDroneId], 1); 
-        if (IsKeyDown(KEY_S)) AdvanceDrone(&drones[activeDroneId], -1);
+    if (currentMessage<=8){
+            if (!showMessage){
+            if (IsKeyDown(KEY_D)) RotateDrone(&drones[activeDroneId], 1); 
+            if (IsKeyDown(KEY_A)) RotateDrone(&drones[activeDroneId], -1); 
+            if (IsKeyDown(KEY_W)) AdvanceDrone(&drones[activeDroneId], 1); 
+            if (IsKeyDown(KEY_S)) AdvanceDrone(&drones[activeDroneId], -1);
 
-        if (IsKeyPressed(KEY_TAB)){
-                activeDroneId++;
-                activeDroneId %= drones.size();
+            if (IsKeyPressed(KEY_TAB)){
+                    activeDroneId++;
+                    activeDroneId %= drones.size();
+            }
         }
+        
+        if (IsKeyPressed(KEY_SPACE))
+            drones[activeDroneId].droneAction(
+                drones[activeDroneId].position,
+                drones[activeDroneId].rotation, &map);
     }
-    
-    if (IsKeyPressed(KEY_SPACE))
-        drones[activeDroneId].droneAction(
-            drones[activeDroneId].position,
-            drones[activeDroneId].rotation, &map);
 
     // Obtener posición en terminos de la cuadricula para cada dron
     Vector2 positions[drones.size()];
@@ -276,5 +280,12 @@ void UpdateGameFrame(void)
         DrawRectangleRec((Rectangle){ screenWidth/4, screenHeight/4, screenWidth/4*2, screenHeight/4*2 }, HIGHLIGHT);
         char* m = messages[currentMessage];
         GuiTextBox((Rectangle){ screenWidth/4, screenHeight/4, screenWidth/4*2, screenHeight/4*2 }, m, 150, false);
+    }
+
+    if (currentMessage>8){
+        GuiSetStyle(DEFAULT, TEXT_WRAP_MODE, TEXT_WRAP_WORD);
+        GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_TOP);
+        DrawRectangleRec((Rectangle){ 0, 0, screenWidth, screenHeight }, BLACK);
+        DrawText("SIGNAL LOST",20, 20, 10, LIGHT);
     }
 }

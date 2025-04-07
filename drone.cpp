@@ -102,6 +102,5 @@ void ScanTile(Vector2 position, float rotation, Map* map){
     
     if (found){
         showMessage = true;
-        map->tileIds[(int)(y*map->tilesX + x)] = TYPE_TILE_EMPTY;
     }
 }
