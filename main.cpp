@@ -17,6 +17,7 @@
 #include "drone.h"
 #include "map.h"
 #include "colors.h"
+#include "messages.h"
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -109,8 +110,8 @@ int main(void)
 
 void InitGameState(void){
     // initial postions: (40,3) (50,3)
-    drones.push_back({Vector2{80*TILE_SIZE, 6*TILE_SIZE}, 3, 0.f, 100, 60, 60});
-    drones.push_back({Vector2{100*TILE_SIZE, 6*TILE_SIZE}, 3, 0.f, 100, 60, 60});
+    drones.push_back(Drone{Vector2{80*TILE_SIZE, 6*TILE_SIZE}, 3, 0.f, 100, 60, 60, DrillTile});
+    drones.push_back(Drone{Vector2{100*TILE_SIZE, 6*TILE_SIZE}, 3, 0.f, 100, 60, 60, ScanTile});
     previous_positions.push_back(Vector2{80*TILE_SIZE, 6*TILE_SIZE});
     previous_positions.push_back(Vector2{100*TILE_SIZE, 6*TILE_SIZE});
     activeDroneId = 0;
@@ -125,15 +126,22 @@ void InitGameState(void){
 }
 
 void UpdateState(void){
-    if (IsKeyDown(KEY_D)) RotateDrone(&drones[activeDroneId], 1); 
-    if (IsKeyDown(KEY_A)) RotateDrone(&drones[activeDroneId], -1); 
-    if (IsKeyDown(KEY_W)) AdvanceDrone(&drones[activeDroneId], 1); 
-    if (IsKeyDown(KEY_S)) AdvanceDrone(&drones[activeDroneId], -1);
+    if (!showMessage){
+        if (IsKeyDown(KEY_D)) RotateDrone(&drones[activeDroneId], 1); 
+        if (IsKeyDown(KEY_A)) RotateDrone(&drones[activeDroneId], -1); 
+        if (IsKeyDown(KEY_W)) AdvanceDrone(&drones[activeDroneId], 1); 
+        if (IsKeyDown(KEY_S)) AdvanceDrone(&drones[activeDroneId], -1);
 
-    if (IsKeyPressed(KEY_TAB)){
-        activeDroneId++;
-        activeDroneId %= drones.size();
+        if (IsKeyPressed(KEY_TAB)){
+                activeDroneId++;
+                activeDroneId %= drones.size();
+        }
     }
+    
+    if (IsKeyPressed(KEY_SPACE))
+        drones[activeDroneId].droneAction(
+            drones[activeDroneId].position,
+            drones[activeDroneId].rotation, &map);
 
     // Obtener posición en terminos de la cuadricula para cada dron
     Vector2 positions[drones.size()];
@@ -185,7 +193,7 @@ void HandleCollisions(void){
             for (int x = (int)(p.x - collisionRange); x < (int)(p.x + collisionRange); x++)
                 if ((x >= 0) && (x < map.tilesX) && (y >= 0) && (y < map.tilesY)){
                     // obtener celdas con las que puede hacer colisión
-                    if(map.tileIds[(int)(y*map.tilesX + x)] == TYPE_TILE_WALL) {
+                    if(map.tileIds[(int)(y*map.tilesX + x)] == TYPE_TILE_WALL || map.tileIds[(int)(y*map.tilesX + x)] == TYPE_TILE_BREAKABLE ) {
                         // iterar cada celda por colisión
                         float xCoord = x*TILE_SIZE;
                         float yCoord = y*TILE_SIZE;
@@ -261,4 +269,12 @@ void UpdateGameFrame(void)
     GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_CENTER);
     GuiToggleGroup((Rectangle){ 1, 1, 80, 20 }, "#3#DRILL\n#1#SCANNER", &activeDroneId);
     //GuiDisable();
+
+    if (showMessage){
+        GuiSetStyle(DEFAULT, TEXT_WRAP_MODE, TEXT_WRAP_WORD);
+        GuiSetStyle(DEFAULT, TEXT_ALIGNMENT_VERTICAL, TEXT_ALIGN_TOP);
+        DrawRectangleRec((Rectangle){ screenWidth/4, screenHeight/4, screenWidth/4*2, screenHeight/4*2 }, HIGHLIGHT);
+        char* m = messages[currentMessage];
+        GuiTextBox((Rectangle){ screenWidth/4, screenHeight/4, screenWidth/4*2, screenHeight/4*2 }, m, 150, false);
+    }
 }
